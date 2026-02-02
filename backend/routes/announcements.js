@@ -19,7 +19,7 @@ router.post('/', (req, res) => {
     data.announcements = [];
   }
   
-  const { title, message } = req.body;
+  const { title, message, type, targetEmployeeId } = req.body;
   
   if (!title || !message) {
     return res.status(400).json({ message: 'Title and message are required' });
@@ -29,6 +29,8 @@ router.post('/', (req, res) => {
     id: data.announcements.length > 0 ? Math.max(...data.announcements.map(a => a.id)) + 1 : 1,
     title,
     message,
+    type: type || 'company', // 'company' or 'individual'
+    targetEmployeeId: type === 'individual' ? targetEmployeeId : null,
     createdAt: new Date().toISOString()
   };
   

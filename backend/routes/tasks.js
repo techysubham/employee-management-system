@@ -4,7 +4,26 @@ const router = express.Router();
 // GET all tasks
 router.get('/', (req, res) => {
   const data = req.app.locals.data;
+  const saveData = req.app.locals.saveData;
   const { status } = req.query;
+  
+  // Auto-reset recurring tasks if completed yesterday
+  const today = new Date().toISOString().split('T')[0];
+  let tasksUpdated = false;
+  
+  data.tasks.forEach(task => {
+    if (task.isRecurring && task.status === 'Completed' && task.lastCompletedDate) {
+      if (task.lastCompletedDate !== today) {
+        // Reset task for new day
+        task.status = 'In Progress';
+        tasksUpdated = true;
+      }
+    }
+  });
+  
+  if (tasksUpdated) {
+    saveData();
+  }
   
   if (status) {
     const filteredTasks = data.tasks.filter(t => t.status === status);
@@ -38,10 +57,10 @@ router.post('/', (req, res) => {
   const data = req.app.locals.data;
   const saveData = req.app.locals.saveData;
   
-  const { employeeId, title, description, deadline } = req.body;
+  const { employeeId, title, description, deadline, isRecurring } = req.body;
   
-  if (!employeeId || !title || !description || !deadline) {
-    return res.status(400).json({ message: 'All fields are required' });
+  if (!employeeId || !title || !description) {
+    return res.status(400).json({ message: 'Required fields are missing' });
   }
   
   const newTask = {
@@ -49,8 +68,10 @@ router.post('/', (req, res) => {
     employeeId: parseInt(employeeId),
     title,
     description,
-    deadline,
+    deadline: deadline || new Date().toISOString().split('T')[0],
     status: 'In Progress',
+    isRecurring: isRecurring || false,
+    lastCompletedDate: null,
     createdAt: new Date().toISOString(),
     completedAt: null,
     approvedAt: null
@@ -76,8 +97,19 @@ router.put('/:id', (req, res) => {
   const { status, action } = req.body;
   
   if (action === 'complete') {
-    data.tasks[taskIndex].status = 'Completed';
-    data.tasks[taskIndex].completedAt = new Date().toISOString();
+    const task = data.tasks[taskIndex];
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (task.isRecurring) {
+      // For recurring tasks, mark as completed for today
+      task.status = 'Completed';
+      task.lastCompletedDate = today;
+      task.completedAt = new Date().toISOString();
+    } else {
+      // For non-recurring tasks, mark as permanently completed
+      task.status = 'Completed';
+      task.completedAt = new Date().toISOString();
+    }
   } else if (status) {
     data.tasks[taskIndex].status = status;
   }
