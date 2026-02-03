@@ -41,7 +41,7 @@ router.post('/', (req, res) => {
     title,
     description,
     priority: priority || 'medium',
-    status: 'open',
+    status: 'Open',
     createdAt: new Date().toISOString()
   };
   
