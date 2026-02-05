@@ -145,12 +145,40 @@ The frontend will run on `http://localhost:3000`
 
 The application uses file-based storage (`data.json`) to persist data. This file is automatically created when the backend server starts.
 
+## Deployment to Vercel
+
+This application is ready to be deployed to Vercel with zero additional configuration needed.
+
+### Quick Deploy
+
+1. Push your code to a GitHub repository
+2. Import your repository on [Vercel](https://vercel.com)
+3. Vercel will automatically detect the configuration from `vercel.json`
+4. Click "Deploy"
+
+### What's Configured
+
+The repository includes a `vercel.json` file that:
+- Configures the React frontend as a static build
+- Sets up the Express backend as serverless functions
+- Routes `/api/*` requests to the backend
+- Handles SPA routing for the frontend
+- Sets appropriate build environment variables
+
+### Important Notes
+
+- The backend API will run as serverless functions on Vercel
+- File-based storage (`data.json`) will reset on each deployment in serverless environment
+- For production use, consider migrating to a persistent database (MongoDB, PostgreSQL, etc.)
+- Environment variables (like email service keys) should be configured in Vercel's dashboard
+
 ## Technologies Used
 
 - **Backend**: Node.js, Express.js
 - **Frontend**: React.js
 - **HTTP Client**: Axios
 - **Styling**: Custom CSS with gradient themes
+- **Deployment**: Vercel-ready with serverless functions
 
 ## License
 
