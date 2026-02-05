@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
-const API_URL = 'http://localhost:5000/api';
+import API_URL from '../config';
 
 function Issues({ currentUser, employees, issues, fetchIssues, userDepartment }) {
   const [newIssue, setNewIssue] = useState({ 

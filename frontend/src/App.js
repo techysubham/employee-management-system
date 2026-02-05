@@ -9,8 +9,7 @@ import OperationsDashboard from './components/OperationsDashboard';
 import ProductResearchDashboard from './components/ProductResearchDashboard';
 import ResourceManagerDashboard from './components/ResourceManagerDashboard';
 import Issues from './components/Issues';
-
-const API_URL = 'http://localhost:5000/api';
+import API_URL from './config';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
