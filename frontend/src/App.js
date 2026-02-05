@@ -4,8 +4,13 @@ import './App.css';
 import Login from './components/Login';
 import HRDashboard from './components/HRDashboard';
 import EmployeeDashboard from './components/EmployeeDashboard';
+import ListingDashboard from './components/ListingDashboard';
+import OperationsDashboard from './components/OperationsDashboard';
+import ProductResearchDashboard from './components/ProductResearchDashboard';
+import ResourceManagerDashboard from './components/ResourceManagerDashboard';
+import Issues from './components/Issues';
 
-const API_URL = 'http://192.168.1.12:5000/api';
+const API_URL = 'http://localhost:5000/api';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -115,9 +120,11 @@ function App() {
     return <Login onLogin={handleLogin} />;
   }
 
-  return (
-    <div className="app">
-      {currentUser.role === 'hr' ? (
+  // Function to determine which dashboard to show
+  const getDashboardComponent = () => {
+    // HR role always gets HR Dashboard
+    if (currentUser.role === 'hr') {
+      return (
         <HRDashboard
           currentUser={currentUser}
           onLogout={handleLogout}
@@ -136,26 +143,163 @@ function App() {
           fetchIssues={fetchIssues}
           fetchWorkHours={fetchWorkHours}
         />
-      ) : (
-        <EmployeeDashboard
-          currentUser={currentUser}
-          onLogout={handleLogout}
-          employees={employees}
-          attendance={attendance}
-          tasks={tasks}
-          leaveRequests={leaveRequests}
-          announcements={announcements}
-          issues={issues}
-          workHours={workHours}
-          fetchEmployees={fetchEmployees}
-          fetchAttendance={fetchAttendance}
-          fetchTasks={fetchTasks}
-          fetchLeaveRequests={fetchLeaveRequests}
-          fetchAnnouncements={fetchAnnouncements}
-          fetchIssues={fetchIssues}
-          fetchWorkHours={fetchWorkHours}
-        />
-      )}
+      );
+    }
+
+    // Department heads get their respective department dashboards
+    if (currentUser.role === 'head' || currentUser.role === 'manager') {
+      switch (currentUser.department) {
+        case 'listing':
+          return (
+            <ListingDashboard
+              currentUser={currentUser}
+              onLogout={handleLogout}
+              employees={employees}
+              attendance={attendance}
+              tasks={tasks}
+              leaveRequests={leaveRequests}
+              announcements={announcements}
+              issues={issues}
+              fetchEmployees={fetchEmployees}
+              fetchAttendance={fetchAttendance}
+              fetchTasks={fetchTasks}
+              fetchLeaveRequests={fetchLeaveRequests}
+              fetchAnnouncements={fetchAnnouncements}
+              fetchIssues={fetchIssues}
+            />
+          );
+        case 'operations':
+          return (
+            <OperationsDashboard
+              currentUser={currentUser}
+              onLogout={handleLogout}
+              employees={employees}
+              attendance={attendance}
+              tasks={tasks}
+              leaveRequests={leaveRequests}
+              announcements={announcements}
+              issues={issues}
+              fetchEmployees={fetchEmployees}
+              fetchAttendance={fetchAttendance}
+              fetchTasks={fetchTasks}
+              fetchLeaveRequests={fetchLeaveRequests}
+              fetchAnnouncements={fetchAnnouncements}
+              fetchIssues={fetchIssues}
+            />
+          );
+        case 'product-research':
+          return (
+            <ProductResearchDashboard
+              currentUser={currentUser}
+              onLogout={handleLogout}
+              employees={employees}
+              attendance={attendance}
+              tasks={tasks}
+              leaveRequests={leaveRequests}
+              announcements={announcements}
+              issues={issues}
+              fetchEmployees={fetchEmployees}
+              fetchAttendance={fetchAttendance}
+              fetchTasks={fetchTasks}
+              fetchLeaveRequests={fetchLeaveRequests}
+              fetchAnnouncements={fetchAnnouncements}
+              fetchIssues={fetchIssues}
+            />
+          );
+        case 'resource-manager':
+          return (
+            <ResourceManagerDashboard
+              currentUser={currentUser}
+              onLogout={handleLogout}
+              employees={employees}
+              attendance={attendance}
+              tasks={tasks}
+              leaveRequests={leaveRequests}
+              announcements={announcements}
+              issues={issues}
+              workHours={workHours}
+              fetchEmployees={fetchEmployees}
+              fetchAttendance={fetchAttendance}
+              fetchTasks={fetchTasks}
+              fetchLeaveRequests={fetchLeaveRequests}
+              fetchAnnouncements={fetchAnnouncements}
+              fetchIssues={fetchIssues}
+              fetchWorkHours={fetchWorkHours}
+            />
+          );
+        case 'hr':
+          // HR department heads also get HR Dashboard
+          return (
+            <HRDashboard
+              currentUser={currentUser}
+              onLogout={handleLogout}
+              employees={employees}
+              attendance={attendance}
+              tasks={tasks}
+              leaveRequests={leaveRequests}
+              announcements={announcements}
+              issues={issues}
+              workHours={workHours}
+              fetchEmployees={fetchEmployees}
+              fetchAttendance={fetchAttendance}
+              fetchTasks={fetchTasks}
+              fetchLeaveRequests={fetchLeaveRequests}
+              fetchAnnouncements={fetchAnnouncements}
+              fetchIssues={fetchIssues}
+              fetchWorkHours={fetchWorkHours}
+            />
+          );
+        default:
+          // Default to employee dashboard for unknown departments
+          return (
+            <EmployeeDashboard
+              currentUser={currentUser}
+              onLogout={handleLogout}
+              employees={employees}
+              attendance={attendance}
+              tasks={tasks}
+              leaveRequests={leaveRequests}
+              announcements={announcements}
+              issues={issues}
+              workHours={workHours}
+              fetchEmployees={fetchEmployees}
+              fetchAttendance={fetchAttendance}
+              fetchTasks={fetchTasks}
+              fetchLeaveRequests={fetchLeaveRequests}
+              fetchAnnouncements={fetchAnnouncements}
+              fetchIssues={fetchIssues}
+              fetchWorkHours={fetchWorkHours}
+            />
+          );
+      }
+    }
+
+    // Regular employees get employee dashboard
+    return (
+      <EmployeeDashboard
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        employees={employees}
+        attendance={attendance}
+        tasks={tasks}
+        leaveRequests={leaveRequests}
+        announcements={announcements}
+        issues={issues}
+        workHours={workHours}
+        fetchEmployees={fetchEmployees}
+        fetchAttendance={fetchAttendance}
+        fetchTasks={fetchTasks}
+        fetchLeaveRequests={fetchLeaveRequests}
+        fetchAnnouncements={fetchAnnouncements}
+        fetchIssues={fetchIssues}
+        fetchWorkHours={fetchWorkHours}
+      />
+    );
+  };
+
+  return (
+    <div className="app">
+      {getDashboardComponent()}
     </div>
   );
 }

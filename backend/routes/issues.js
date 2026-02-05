@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { sendIssueNotification } = require('../services/emailService');
 
 // GET all issues
 router.get('/', (req, res) => {
@@ -20,8 +21,32 @@ router.get('/employee/:id', (req, res) => {
   res.json(issues);
 });
 
+// GET issues by department
+router.get('/department/:dept', (req, res) => {
+  const data = req.app.locals.data;
+  if (!data.issues) {
+    data.issues = [];
+  }
+  const department = req.params.dept.toLowerCase();
+  
+  let issues = [];
+  
+  if (department === 'hr') {
+    // HR dashboard shows all issues
+    issues = data.issues;
+  } else {
+    // Other departments only see their assigned issues
+    issues = data.issues.filter(i => 
+      (i.assignedTo && i.assignedTo.toLowerCase() === department) ||
+      (i.department && i.department.toLowerCase() === department)
+    );
+  }
+  
+  res.json(issues);
+});
+
 // POST create new issue
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const data = req.app.locals.data;
   const saveData = req.app.locals.saveData;
   
@@ -29,10 +54,10 @@ router.post('/', (req, res) => {
     data.issues = [];
   }
   
-  const { employeeId, title, description, priority } = req.body;
+  const { employeeId, title, description, priority, assignedTo, department } = req.body;
   
-  if (!employeeId || !title || !description) {
-    return res.status(400).json({ message: 'Employee ID, title and description are required' });
+  if (!employeeId || !title || !description || !assignedTo) {
+    return res.status(400).json({ message: 'Employee ID, title, description and assigned department are required' });
   }
   
   const newIssue = {
@@ -42,10 +67,47 @@ router.post('/', (req, res) => {
     description,
     priority: priority || 'medium',
     status: 'Open',
-    createdAt: new Date().toISOString()
+    assignedTo, // Department assignment (hr, operations, listing, resource-manager, product-research)
+    department: department || assignedTo, // For backward compatibility
+    createdAt: new Date().toISOString(),
+    assignedAt: new Date().toISOString()
   };
   
   data.issues.push(newIssue);
+  saveData();
+  
+  // Send email notification
+  try {
+    // Get employee information for the notification
+    const employee = data.employees ? data.employees.find(emp => emp.id === parseInt(employeeId)) : null;
+    const employeeData = employee ? {
+      name: employee.name,
+      email: employee.email,
+      position: employee.position,
+      department: employee.department
+    } : { name: 'Unknown Employee' };
+    
+    console.log('📧 Sending issue notification email...');
+    const emailResult = await sendIssueNotification(newIssue, employeeData);
+    
+    if (emailResult.success) {
+      console.log('✅ Issue notification sent successfully to:', emailResult.recipients?.join(', '));
+      // Add email status to response (optional)
+      newIssue.emailNotificationSent = true;
+      newIssue.emailSentTo = emailResult.recipients;
+    } else {
+      console.log('❌ Failed to send issue notification:', emailResult.message);
+      newIssue.emailNotificationSent = false;
+      newIssue.emailError = emailResult.message;
+    }
+    
+  } catch (error) {
+    console.error('❌ Email notification error:', error.message);
+    newIssue.emailNotificationSent = false;
+    newIssue.emailError = error.message;
+  }
+  
+  // Save updated issue with email status
   saveData();
   
   res.status(201).json(newIssue);
@@ -66,10 +128,25 @@ router.put('/:id', (req, res) => {
     return res.status(404).json({ message: 'Issue not found' });
   }
   
-  const { status } = req.body;
+  const { status, assignedTo, department, priority, resolvedBy, resolution } = req.body;
   
   if (status) {
     data.issues[issueIndex].status = status;
+    if (status === 'Resolved' || status === 'Closed') {
+      data.issues[issueIndex].resolvedAt = new Date().toISOString();
+      if (resolvedBy) data.issues[issueIndex].resolvedBy = resolvedBy;
+      if (resolution) data.issues[issueIndex].resolution = resolution;
+    }
+  }
+  
+  if (assignedTo) {
+    data.issues[issueIndex].assignedTo = assignedTo;
+    data.issues[issueIndex].department = department || assignedTo;
+    data.issues[issueIndex].reassignedAt = new Date().toISOString();
+  }
+  
+  if (priority) {
+    data.issues[issueIndex].priority = priority;
   }
   
   saveData();

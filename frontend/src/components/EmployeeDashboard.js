@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = 'http://192.168.1.12:5000/api';
+const API_URL = 'http://localhost:5000/api';
 
 function EmployeeDashboard({ 
   currentUser: initialUser, 
@@ -27,7 +27,7 @@ function EmployeeDashboard({
   });
   const [newTask, setNewTask] = useState({ title: '', description: '', deadline: '', isRecurring: false });
   const [newLeave, setNewLeave] = useState({ startDate: '', endDate: '', type: 'sick', reason: '' });
-  const [newIssue, setNewIssue] = useState({ title: '', description: '', priority: 'medium' });
+  const [newIssue, setNewIssue] = useState({ title: '', description: '', priority: 'medium', assignedTo: 'hr' });
   const [checkedIn, setCheckedIn] = useState(false);
   const [weeklyHours, setWeeklyHours] = useState({ totalHours: 0, totalOvertime: 0 });
   const [showTaskForm, setShowTaskForm] = useState(false);
@@ -280,7 +280,7 @@ function EmployeeDashboard({
         employeeId: currentUser.employeeId,
         ...newIssue
       });
-      setNewIssue({ title: '', description: '', priority: 'medium' });
+      setNewIssue({ title: '', description: '', priority: 'medium', assignedTo: 'hr' });
       fetchIssues();
     } catch (error) {
       console.error('Error adding issue:', error);
@@ -657,6 +657,18 @@ function EmployeeDashboard({
                 <option value="medium">🟡 Medium Priority</option>
                 <option value="high">🔴 High Priority</option>
               </select>
+              <select
+                value={newIssue.assignedTo}
+                onChange={(e) => setNewIssue({...newIssue, assignedTo: e.target.value})}
+                className="issue-select"
+                required
+              >
+                <option value="hr">📋 HR Department</option>
+                <option value="operations">⚙️ Operations Department</option>
+                <option value="listing">🛍️ Listing Department</option>
+                <option value="template">📄 Template Department</option>
+                <option value="product-research">🔬 Product Research</option>
+              </select>
               <button type="submit" className="submit-issue-btn">📢 Submit Issue</button>
             </form>
 
@@ -678,6 +690,16 @@ function EmployeeDashboard({
                         <div className="issue-desc-modern">{issue.description}</div>
                         <div className="issue-meta-modern">
                           {new Date(issue.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {issue.status}
+                          {(issue.assignedTo || issue.department) && (
+                            <span> • Assigned to: {
+                              (issue.assignedTo === 'hr' && 'HR Department') ||
+                              (issue.assignedTo === 'operations' && 'Operations') ||
+                              (issue.assignedTo === 'listing' && 'Listing') ||
+                              (issue.assignedTo === 'template' && 'Template') ||
+                              (issue.assignedTo === 'product-research' && 'Product Research') ||
+                              issue.assignedTo || issue.department
+                            }</span>
+                          )}
                         </div>
                       </div>
                       {issue.status === 'Open' && (

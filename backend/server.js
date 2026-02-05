@@ -3,6 +3,10 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config();
+
+// Import email service
+const { initEmailService, sendTestEmail } = require('./services/emailService');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -84,9 +88,33 @@ app.get('/', (req, res) => {
 app.locals.data = data;
 app.locals.saveData = saveData;
 
+// Email test endpoint
+app.get('/api/test-email', async (req, res) => {
+  try {
+    const result = await sendTestEmail();
+    if (result.success) {
+      res.json({ message: 'Test email sent successfully', messageId: result.messageId });
+    } else {
+      res.status(500).json({ message: 'Failed to send test email', error: result.message });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Email service error', error: error.message });
+  }
+});
+
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Local: http://localhost:${PORT}`);
   console.log(`Network: http://192.168.1.12:${PORT}`);
+  
+  // Initialize email service
+  console.log('\n📧 Initializing email service...');
+  const emailInitialized = initEmailService();
+  if (emailInitialized) {
+    console.log('✅ Email notifications are enabled');
+    console.log('📧 Test email endpoint: http://localhost:' + PORT + '/api/test-email');
+  } else {
+    console.log('⚠️  Email notifications are disabled (check .env configuration)');
+  }
 });

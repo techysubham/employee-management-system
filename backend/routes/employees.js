@@ -24,10 +24,10 @@ router.post('/', (req, res) => {
   const data = req.app.locals.data;
   const saveData = req.app.locals.saveData;
   
-  const { name, email, position } = req.body;
+  const { name, email, position, department, role, customRole, customDepartment } = req.body;
   
-  if (!name || !email || !position) {
-    return res.status(400).json({ message: 'All fields are required' });
+  if (!name || !email || !position || !department) {
+    return res.status(400).json({ message: 'Name, email, position, and department are required' });
   }
   
   const newEmployee = {
@@ -35,6 +35,10 @@ router.post('/', (req, res) => {
     name,
     email,
     position,
+    department: department || 'operations',
+    role: role || 'employee',
+    customRole: customRole || false,
+    customDepartment: customDepartment || false,
     leaveBalance: 2,
     lastBalanceReset: new Date().toISOString()
   };
@@ -56,13 +60,17 @@ router.put('/:id', (req, res) => {
     return res.status(404).json({ message: 'Employee not found' });
   }
   
-  const { name, email, position } = req.body;
+  const { name, email, position, department, role, customRole, customDepartment } = req.body;
   
   data.employees[employeeIndex] = {
     ...data.employees[employeeIndex],
     name: name || data.employees[employeeIndex].name,
     email: email || data.employees[employeeIndex].email,
-    position: position || data.employees[employeeIndex].position
+    position: position || data.employees[employeeIndex].position,
+    department: department || data.employees[employeeIndex].department,
+    role: role || data.employees[employeeIndex].role,
+    customRole: customRole !== undefined ? customRole : data.employees[employeeIndex].customRole,
+    customDepartment: customDepartment !== undefined ? customDepartment : data.employees[employeeIndex].customDepartment
   };
   
   saveData();

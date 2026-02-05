@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const emailService = require('../services/emailService');
 
 // GET all leave requests
 router.get('/', (req, res) => {
@@ -34,7 +35,7 @@ router.get('/employee/:id', (req, res) => {
 });
 
 // POST create new leave request
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const data = req.app.locals.data;
   const saveData = req.app.locals.saveData;
   
@@ -63,11 +64,20 @@ router.post('/', (req, res) => {
   data.leaveRequests.push(newLeaveRequest);
   saveData();
   
+  // Send email notification
+  try {
+    const employee = data.employees.find(emp => emp.id === parseInt(employeeId));
+    await emailService.sendLeaveRequestNotification(newLeaveRequest, employee || { name: 'Unknown Employee', email: '' }, 'create');
+    console.log('📧 ✓ Leave request email notification sent');
+  } catch (emailError) {
+    console.error('📧 ✗ Failed to send leave request email:', emailError.message);
+  }
+  
   res.status(201).json(newLeaveRequest);
 });
 
 // PUT update leave request (approve or reject)
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   const data = req.app.locals.data;
   const saveData = req.app.locals.saveData;
   
@@ -110,6 +120,16 @@ router.put('/:id', (req, res) => {
     
     data.leaveRequests[leaveIndex].status = status;
     data.leaveRequests[leaveIndex].reviewedAt = new Date().toISOString();
+    
+    // Send email notification for status update
+    try {
+      const employee = data.employees.find(emp => emp.id === leaveRequest.employeeId);
+      const action = status === 'Approved' ? 'approve' : 'reject';
+      await emailService.sendLeaveRequestNotification(data.leaveRequests[leaveIndex], employee || { name: 'Unknown Employee', email: '' }, action);
+      console.log(`📧 ✓ Leave request ${action} email notification sent`);
+    } catch (emailError) {
+      console.error(`📧 ✗ Failed to send leave request ${action} email:`, emailError.message);
+    }
   }
   
   saveData();

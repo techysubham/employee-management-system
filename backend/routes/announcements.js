@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const emailService = require('../services/emailService');
 
 // GET all announcements
 router.get('/', (req, res) => {
@@ -11,7 +12,7 @@ router.get('/', (req, res) => {
 });
 
 // POST create new announcement
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const data = req.app.locals.data;
   const saveData = req.app.locals.saveData;
   
@@ -36,6 +37,19 @@ router.post('/', (req, res) => {
   
   data.announcements.push(newAnnouncement);
   saveData();
+  
+  // Send email notification
+  try {
+    let targetEmployee = null;
+    if (type === 'individual' && targetEmployeeId) {
+      targetEmployee = data.employees.find(emp => emp.id === parseInt(targetEmployeeId));
+    }
+    
+    await emailService.sendAnnouncementNotification(newAnnouncement, targetEmployee);
+    console.log('📧 ✓ Announcement email notification sent');
+  } catch (emailError) {
+    console.error('📧 ✗ Failed to send announcement email:', emailError.message);
+  }
   
   res.status(201).json(newAnnouncement);
 });

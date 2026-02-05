@@ -1380,11 +1380,13 @@ logout
 }
 
 .employee-dashboard {
-  /* Employee-specific styles */
+  display: flex;
+  flex-direction: column;
 }
 
 .employee-dashboard .tabs .tab-btn {
-  /* Only show employee-relevant tabs */
+  padding: 10px 20px;
+  margin-right: 10px;
 }
 
 #switchUser {
