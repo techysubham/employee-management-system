@@ -102,19 +102,25 @@ app.get('/api/test-email', async (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Local: http://localhost:${PORT}`);
-  console.log(`Network: http://192.168.1.12:${PORT}`);
-  
-  // Initialize email service
-  console.log('\n📧 Initializing email service...');
-  const emailInitialized = initEmailService();
-  if (emailInitialized) {
-    console.log('✅ Email notifications are enabled');
-    console.log('📧 Test email endpoint: http://localhost:' + PORT + '/api/test-email');
-  } else {
-    console.log('⚠️  Email notifications are disabled (check .env configuration)');
-  }
-});
+// Start server (only in local development, not on Vercel)
+// Vercel runs the app as a serverless function, so we don't need to start a server
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`Local: http://localhost:${PORT}`);
+    console.log(`Network: http://192.168.1.12:${PORT}`);
+    
+    // Initialize email service
+    console.log('\n📧 Initializing email service...');
+    const emailInitialized = initEmailService();
+    if (emailInitialized) {
+      console.log('✅ Email notifications are enabled');
+      console.log('📧 Test email endpoint: http://localhost:' + PORT + '/api/test-email');
+    } else {
+      console.log('⚠️  Email notifications are disabled (check .env configuration)');
+    }
+  });
+}
+
+// Export app for Vercel serverless function
+module.exports = app;
